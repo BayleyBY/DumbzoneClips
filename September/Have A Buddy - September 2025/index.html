@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Have A Buddy - Have A Buddy - September 2025</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.45; margin: 24px; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap: wrap; }
+    .row { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap: wrap; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:12px 14px; margin:12px 0; }
+    .small { color:#777; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    audio { width: 320px; }
+    select { padding:6px 8px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span class="mono">Have A Buddy - September 2025</span></h1>
+    <div class="row">
+      <label for="episodeFilter">Filter by episode:</label>
+      <select id="episodeFilter"><option value="">All</option></select>
+    </div>
+    <div class="small">Portable page with local clips (read-only).</div>
+  </header>
+  <div id="hits"></div>
+
+<script id="payload" type="application/json">[{"episode": "25-09-15", "episode_pretty": "September 15", "start": 9717.389, "end": 9717.91, "text": "Uh, I have a buddy who helped give life to twin sons a few years ago, like, what am I doing here?", "speaker_id": "SPEAKER_06", "speaker": "DAN", "clip": "clips/25-09-15_tp_001.mp3"}, {"episode": "25-09-19", "episode_pretty": "September 19", "start": 5218.851, "end": 5219.432, "text": "I do have a buddy who does that freelance.", "speaker_id": "SPEAKER_08", "speaker": "JAKE", "clip": "clips/25-09-19_tp_001.mp3"}, {"episode": "25-09-26", "episode_pretty": "September 26", "start": 8162.517, "end": 8163.078, "text": "I've told you guys before, I had a buddy, have a buddy who was in line that day when that lady got decapitated at the Texas giant.", "speaker_id": "SPEAKER_06", "speaker": "JAKE", "clip": "clips/25-09-26_tp_001.mp3"}, {"episode": "25-09-26", "episode_pretty": "September 26", "start": 10532.989, "end": 10533.39, "text": "I have a buddy who's got the separate bedroom thing.", "speaker_id": "SPEAKER_06", "speaker": "JAKE", "clip": "clips/25-09-26_tp_002.mp3"}, {"episode": "25-09-30", "episode_pretty": "September 30", "start": 9544.832, "end": 9545.373, "text": "I have a buddy who hates Max Verstappen and he's a buddy that if we're traveling or partying back in the day, I would be with him on Saturday or Sunday morning and he would just get up to hate watch this guy and he would win every time.", "speaker_id": "SPEAKER_07", "speaker": "JAKE", "clip": "clips/25-09-30_tp_001.mp3"}]</script>
+<script>
+let data = [];
+try {
+  data = JSON.parse(document.getElementById('payload').textContent);
+} catch (e) {
+  const pre = document.createElement('pre');
+  pre.textContent = 'JSON parse error: ' + e.message;
+  pre.style.color = 'crimson';
+  document.body.insertBefore(pre, document.body.firstChild);
+}
+
+function buildUI() {
+  const container = document.getElementById('hits');
+  const select = document.getElementById('episodeFilter');
+
+  const epNames = {};
+  data.forEach(d => { epNames[d.episode] = d.episode_pretty || d.episode; });
+  const episodes = Object.keys(epNames).sort();
+  episodes.forEach(ep => { const opt = document.createElement('option'); opt.value = ep; opt.textContent = epNames[ep]; select.appendChild(opt); });
+
+  function render(filterEp) {
+    container.innerHTML = '';
+    const items = filterEp ? data.filter(d => d.episode === filterEp) : data;
+    if (!items.length) { const d = document.createElement('div'); d.className = 'small'; d.textContent = 'No matches.'; container.appendChild(d); return; }
+
+    items.forEach((item, idx) => {
+      const card = document.createElement('div'); card.className = 'card';
+
+      const title = document.createElement('div'); title.className = 'row';
+      const left = document.createElement('div');
+      const strongEl = document.createElement('strong'); strongEl.textContent = '#' + (idx + 1);
+      const smallEl = document.createElement('span'); smallEl.className = 'small';
+      smallEl.textContent = '(episode: ' + (item.episode_pretty || item.episode) + ', speaker: ' + item.speaker + ')';
+      left.appendChild(strongEl); left.appendChild(document.createTextNode(' ')); left.appendChild(smallEl);
+      const right = document.createElement('div'); right.className = 'small mono'; right.textContent = '@ ' + item.start.toFixed(2) + 's – ' + item.end.toFixed(2) + 's';
+      title.appendChild(left); title.appendChild(right);
+
+      const row = document.createElement('div'); row.className = 'row';
+      const audio = document.createElement('audio'); audio.controls = true; audio.preload = 'metadata'; audio.src = item.clip;
+      const text = document.createElement('span'); text.textContent = '  ' + item.text;
+
+      row.appendChild(audio); row.appendChild(text);
+      card.appendChild(title); card.appendChild(row);
+      container.appendChild(card);
+    });
+  }
+
+  select.onchange = () => render(select.value || '');
+  render('');
+}
+
+buildUI();
+</script>
+</body>
+</html>
