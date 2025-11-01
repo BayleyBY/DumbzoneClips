@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Fight With Wife — October 2025</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.45; margin: 24px; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap: wrap; }
+    .row { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap: wrap; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:12px 14px; margin:12px 0; }
+    .small { color:#777; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    audio { width: 320px; }
+    select { padding:6px 8px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fight With Wife — October 2025</h1>
+    <div class="row">
+      <label for="episodeFilter">Filter by episode:</label>
+      <select id="episodeFilter"><option value="">All</option></select>
+    </div>
+    <div class="small">Portable read-only page. Share this folder as-is (keep <span class="mono">clips/</span> with it).</div>
+  </header>
+  <div id="hits"></div>
+
+<script id="payload" type="application/json">[{"episode": "25-10-07", "episode_pretty": "October 7", "start": 3752.575, "end": 3756.2, "text": "So we didn't have a Dan fight with his wife this week.", "speaker_id": "SPEAKER_06", "speaker": "DAN", "clip": "clips/25-10-07_wife_001.mp3"}, {"episode": "25-10-09", "episode_pretty": "October 9", "start": 5135.515, "end": 5160.426, "text": "drugs and my this is an argument I get in with my wife because she always buys the generic and I'm like yeah but if you get generic toilet paper if you get generic paper towels are they not significantly worse than bounty that's that options like yeah exist in medicine though right but she's like no but it's all the same ingredients my doctor says it's the exact same and I'm like okay I kind of believe that but they legally have to make them the same", "speaker_id": "SPEAKER_07", "speaker": "DAN", "clip": "clips/25-10-09_wife_001.mp3"}]</script>
+<script>
+let data = [];
+try {
+  data = JSON.parse(document.getElementById('payload').textContent);
+  if (!Array.isArray(data)) data = [];
+} catch (e) {
+  const pre = document.createElement('pre');
+  pre.textContent = 'JSON parse error: ' + e.message;
+  pre.style.color = 'crimson';
+  document.body.insertBefore(pre, document.body.firstChild);
+}
+
+function render() {
+  const container = document.getElementById('hits');
+  const select = document.getElementById('episodeFilter');
+  if (!select.dataset.init) {
+    const episodes = Array.from(new Set(data.map(d => d.episode))).sort();
+    episodes.forEach(ep => { const opt = document.createElement('option'); opt.value = ep; opt.textContent = ep; select.appendChild(opt); });
+    select.dataset.init = "1";
+    select.onchange = () => render();
+  }
+  container.innerHTML = '';
+  const filterEp = select.value || '';
+  const items = filterEp ? data.filter(d => d.episode === filterEp) : data;
+  if (!items.length) {
+    const d = document.createElement('div'); d.className = 'small'; d.textContent = 'No matches.'; container.appendChild(d); return;
+  }
+  items.forEach((item, idx) => {
+    const card = document.createElement('div'); card.className = 'card';
+    const title = document.createElement('div'); title.className = 'row';
+    const left = document.createElement('div');
+    left.innerHTML = '<strong>#' + (idx+1) + '</strong> ' +
+                     '<span class="small">(episode: ' + (item.episode || '?') +
+                     ', speaker: ' + (item.speaker || item.speaker_id || '?') + ')</span>';
+    const right = document.createElement('div'); right.className = 'small mono';
+    const s = Number(item.start || 0).toFixed(2), e = Number(item.end || 0).toFixed(2);
+    right.textContent = '@ ' + s + 's – ' + e + 's';
+    title.appendChild(left); title.appendChild(right);
+
+    const row = document.createElement('div'); row.className = 'row';
+    const audio = document.createElement('audio'); audio.controls = true; audio.preload = 'metadata';
+    audio.src = item.clip;
+    const text = document.createElement('span');
+    // Avoid quotes that could break HTML; payload already contains raw text.
+    text.textContent = '  ' + (item.text || '');
+    row.appendChild(audio); row.appendChild(text);
+
+    card.appendChild(title); card.appendChild(row); container.appendChild(card);
+  });
+}
+render();
+</script>
+</body>
+</html>

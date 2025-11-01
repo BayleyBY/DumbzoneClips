@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>The Point Is — October 2025</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.45; margin: 24px; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap: wrap; }
+    .row { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap: wrap; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:12px 14px; margin:12px 0; }
+    .small { color:#777; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    audio { width: 320px; }
+    select { padding:6px 8px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Point Is — October 2025</h1>
+    <div class="row">
+      <label for="episodeFilter">Filter by episode:</label>
+      <select id="episodeFilter"><option value="">All</option></select>
+    </div>
+    <div class="small">Portable read-only page. Share this folder as-is (keep <span class="mono">clips/</span> with it).</div>
+  </header>
+  <div id="hits"></div>
+
+<script id="payload" type="application/json">[{"episode": "25-10-06", "episode_pretty": "October 6", "start": 2923.252, "end": 2929.804, "text": "If anybody knows trim, it's me, but, uh, the point is they're not going to charge you for your trim.", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-10-06_tp_001.mp3"}, {"episode": "25-10-06", "episode_pretty": "October 6", "start": 7832.332, "end": 7835.438, "text": "But the point is she's got the most unique accent ever.", "speaker_id": "SPEAKER_08", "speaker": "JAKE", "clip": "clips/25-10-06_tp_002.mp3"}, {"episode": "25-10-10", "episode_pretty": "October 10", "start": 3329.468, "end": 3340.722, "text": "But the point is you don't remember because teams that are good at doing this, they can throw anyone out there and eventually they can get you six, seven games, hell, maybe a full season of production.", "speaker_id": "SPEAKER_06", "speaker": "JAKE", "clip": "clips/25-10-10_tp_001.mp3"}, {"episode": "25-10-14", "episode_pretty": "October 14", "start": 2568.828, "end": 2577.198, "text": "is separating you, but I thought socks would be good because if you wore- I'm sure they don't work, but the point is that- What does that say?", "speaker_id": "SPEAKER_07", "speaker": "JAKE", "clip": "clips/25-10-14_tp_001.mp3"}, {"episode": "25-10-21", "episode_pretty": "October 21", "start": 8548.683, "end": 8550.826, "text": "Well, the point is he wrote that book.", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-10-21_tp_001.mp3"}, {"episode": "25-10-21", "episode_pretty": "October 21", "start": 8553.69, "end": 8569.952, "text": "Some people put it together like, Oh, this is a, what was it allegory or comparable to the cave or whatever to, to know society and, and the, the hard work that you do or something, it had something to do with a political, the point is then it became,", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-10-21_tp_002.mp3"}, {"episode": "25-10-21", "episode_pretty": "October 21", "start": 8807.536, "end": 8822.115, "text": "The point is that he captures her, he's got her, he's torturing her, and then he's trying to kill her because he brought his mom's body, which is the body that was buried next to his mom, and he's holding a hammer in her hand and trying to hit her on the head with it.", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-10-21_tp_003.mp3"}]</script>
+<script>
+let data = [];
+try {
+  data = JSON.parse(document.getElementById('payload').textContent);
+  if (!Array.isArray(data)) data = [];
+} catch (e) {
+  const pre = document.createElement('pre');
+  pre.textContent = 'JSON parse error: ' + e.message;
+  pre.style.color = 'crimson';
+  document.body.insertBefore(pre, document.body.firstChild);
+}
+
+function render() {
+  const container = document.getElementById('hits');
+  const select = document.getElementById('episodeFilter');
+  if (!select.dataset.init) {
+    const episodes = Array.from(new Set(data.map(d => d.episode))).sort();
+    episodes.forEach(ep => { const opt = document.createElement('option'); opt.value = ep; opt.textContent = ep; select.appendChild(opt); });
+    select.dataset.init = "1";
+    select.onchange = () => render();
+  }
+  container.innerHTML = '';
+  const filterEp = select.value || '';
+  const items = filterEp ? data.filter(d => d.episode === filterEp) : data;
+  if (!items.length) {
+    const d = document.createElement('div'); d.className = 'small'; d.textContent = 'No matches.'; container.appendChild(d); return;
+  }
+  items.forEach((item, idx) => {
+    const card = document.createElement('div'); card.className = 'card';
+    const title = document.createElement('div'); title.className = 'row';
+    const left = document.createElement('div');
+    left.innerHTML = '<strong>#' + (idx+1) + '</strong> ' +
+                     '<span class="small">(episode: ' + (item.episode || '?') +
+                     ', speaker: ' + (item.speaker || item.speaker_id || '?') + ')</span>';
+    const right = document.createElement('div'); right.className = 'small mono';
+    const s = Number(item.start || 0).toFixed(2), e = Number(item.end || 0).toFixed(2);
+    right.textContent = '@ ' + s + 's – ' + e + 's';
+    title.appendChild(left); title.appendChild(right);
+
+    const row = document.createElement('div'); row.className = 'row';
+    const audio = document.createElement('audio'); audio.controls = true; audio.preload = 'metadata';
+    audio.src = item.clip;
+    const text = document.createElement('span');
+    // Avoid quotes that could break HTML; payload already contains raw text.
+    text.textContent = '  ' + (item.text || '');
+    row.appendChild(audio); row.appendChild(text);
+
+    card.appendChild(title); card.appendChild(row); container.appendChild(card);
+  });
+}
+render();
+</script>
+</body>
+</html>
