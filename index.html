@@ -2,70 +2,150 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dumbzone Podcast Snippets — Index</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dumbzone Clips — Index</title>
   <style>
-    :root { --fg:#111; --muted:#6b7280; --bg:#fff; --border:#e5e7eb; --card:#fafafa; }
-    body { margin: 24px; font-family: -apple-system, system-ui, Segoe UI, Roboto, sans-serif; color: var(--fg); background: var(--bg); }
-    h1 { margin: 0 0 8px 0; }
-    .muted { color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
-    .card { border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .month { font-weight: 600; }
-    a.btn { display: inline-block; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); text-decoration: none; color: var(--fg); background: #fff; }
-    a.btn:hover { background: #f5f5f5; }
-    footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
-    .note { font-size: 13px; }
+    :root { --fg:#111; --muted:#6b7280; --card:#ffffff; --bg:#f7f7f7; --accent:#2563eb; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; color:var(--fg); background:var(--bg); }
+    header { padding:24px 20px; background:#fff; border-bottom:1px solid #e5e7eb; position:sticky; top:0; z-index:10; }
+    h1 { margin:0; font-size:24px; letter-spacing:.2px; }
+    .sub { color:var(--muted); font-size:14px; margin-top:6px; }
+    main { max-width:980px; margin:24px auto; padding:0 20px 80px; }
+    .controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+    input[type="search"], select { padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; min-width:220px; background:#fff; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:14px; }
+    .card { background:var(--card); border:1px solid #e5e7eb; border-radius:14px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); display:flex; flex-direction:column; gap:10px; }
+    .card h3 { margin:0; font-size:18px; }
+    .list { display:flex; flex-direction:column; gap:6px; }
+    .link { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #e5e7eb; border-radius:10px; text-decoration:none; color:inherit; background:#fff; }
+    .chip { font-size:12px; color:#fff; background:var(--accent); padding:2px 8px; border-radius:999px; }
+    .muted { color:var(--muted); font-size:12px; }
+    .err { color:#991b1b; background:#fee2e2; border:1px solid #fecaca; padding:10px 12px; border-radius:12px; }
+    footer { color:var(--muted); text-align:center; font-size:12px; margin-top:16px; }
   </style>
 </head>
 <body>
-  <h1>Dumbzone Podcast Snippets</h1>
-  <div class="muted">Choose a phrase below to see this month's snippets.</div>
+  <header>
+    <h1>Dumbzone Clips — Index</h1>
+    <div class="sub">Lists every month folder and its clip pages (e.g., “The Point Is — September 2025”, “Have A Buddy — September 2025”).</div>
+  </header>
+  <main>
+    <div class="controls">
+      <input id="q" type="search" placeholder="Filter by month or title… (e.g., 25-10, September, Buddy)" />
+      <select id="view">
+        <option value="cards">Card view</option>
+        <option value="list">Compact list</option>
+      </select>
+      <span id="count" class="muted"></span>
+    </div>
+    <div id="mount"></div>
 
-  <div id="grid" class="grid"></div>
-
-  <footer class="note">
-    This is all months so far.
-  </footer>
+    <footer>
+      <div id="debug" class="muted"></div>
+    </footer>
+  </main>
 
 <script>
-  // 🔧 Update this list as you add more months
-  const months = [
-    {
-      label: "September 2025",
-      folder: "September",
-      haveABuddy: "Have A Buddy - September 2025",
-      pointIs: "The Point Is - September 2025",
-    },
-    // { label: "October 2025", folder: "October", haveABuddy: "Have A Buddy - October 2025", pointIs: "The Point Is - October 2025" },
-  ];
+// ====== CONFIG ======
+// If you ever rename the repo or change branches, adjust here.
+const OWNER  = 'BayleyBY';
+const REPO   = 'DumbzoneClips';
+const BRANCH = 'main';     // or 'gh-pages' if you publish from that branch
+const BASE   = `https://${OWNER}.github.io/${REPO}/`;
 
-  const grid = document.getElementById('grid');
+// Labels we consider as category folders inside each month folder.
+// If you standardize names, add them here to pretty-print.
+const KNOWN_CATEGORIES = [
+  'The Point Is -',
+  'Have A Buddy -',
+  'Roseanne -',
+  'Hillary -',
+  'Fight With Wife -'
+];
 
-  months.forEach(m => {
-    const wrap = document.createElement('div'); wrap.className = 'card';
+// ====== Helpers ======
+const $ = sel => document.querySelector(sel);
+function el(tag, props={}, ...kids){ const n=document.createElement(tag); Object.assign(n, props); kids.flat().forEach(k=> n.append(k?.nodeType? k: document.createTextNode(k??''))); return n; }
+function isMonthName(s){ return /^\d{2}-\d{2}$/.test(s) || /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(s); }
+function prettyCat(name){
+  // Try to trim trailing year if present and normalize spacing
+  for (const k of KNOWN_CATEGORIES){ if (name.startsWith(k)) return name; }
+  return name;
+}
 
-    const title = document.createElement('div'); title.className = 'month'; title.textContent = m.label;
+async function gh(path) {
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(BRANCH)}`;
+  const r = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' }});
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText} for ${path}`);
+  return r.json();
+}
 
-    const row = document.createElement('div'); row.className = 'row';
+async function loadIndex(){
+  // Top-level: expect month folders like "September/" or "25-10/"
+  const top = await gh('');
+  const months = top.filter(x => x.type === 'dir');
 
-    const hab = document.createElement('a');
-    hab.className = 'btn';
-    hab.href = `${m.folder}/${m.haveABuddy}/`;
-    hab.textContent = 'Have A Buddy';
+  const items = [];
+  for (const m of months){
+    let children = [];
+    try { children = await gh(m.path); } catch (e) { /* ignore */ }
+    const pages = children.filter(c => c.type==='dir');
 
-    const tp = document.createElement('a');
-    tp.className = 'btn';
-    tp.href = `${m.folder}/${m.pointIs}/`;
-    tp.textContent = 'The Point Is';
+    for (const p of pages){
+      // link to that folder's index.html
+      const href = `${BASE}${encodeURIComponent(m.name)}/${encodeURIComponent(p.name)}/`;
+      const title = p.name.replace(/\/+$/, '');
+      items.push({ month:m.name, title, href });
+    }
+  }
+  return items.sort((a,b)=> a.month.localeCompare(b.month) || a.title.localeCompare(b.title));
+}
 
-    row.appendChild(hab);
-    row.appendChild(tp);
-    wrap.appendChild(title);
-    wrap.appendChild(row);
-    grid.appendChild(wrap);
-  });
+function render(items){
+  const mount = $('#mount');
+  const q = ($('#q').value || '').trim().toLowerCase();
+  const view = $('#view').value;
+  let filtered = items;
+  if (q){ filtered = items.filter(it => (it.month+' '+it.title).toLowerCase().includes(q)); }
+  $('#count').textContent = `${filtered.length} page${filtered.length===1?'':'s'}`;
+
+  if (view === 'list'){
+    const list = el('div', {className:'list'});
+    filtered.forEach(it => {
+      list.append(
+        el('a', {className:'link', href: it.href},
+          el('span', {className:'chip'}, it.month),
+          el('span', {}, it.title)
+        )
+      );
+    });
+    mount.replaceChildren(list);
+  } else {
+    // Group by month, make cards
+    const byMonth = new Map();
+    for (const it of filtered){ if (!byMonth.has(it.month)) byMonth.set(it.month, []); byMonth.get(it.month).push(it); }
+    const grid = el('div', {className:'grid'});
+    for (const [month, arr] of byMonth){
+      const list = el('div', {className:'list'});
+      arr.forEach(it=> list.append(el('a', {className:'link', href:it.href}, it.title)));
+      grid.append(el('div', {className:'card'}, el('h3', {}, month), list));
+    }
+    mount.replaceChildren(grid);
+  }
+}
+
+(async function(){
+  try {
+    const items = await loadIndex();
+    render(items);
+    $('#q').addEventListener('input', ()=> render(items));
+    $('#view').addEventListener('change', ()=> render(items));
+    $('#debug').textContent = `Repo: ${OWNER}/${REPO} @ ${BRANCH}`;
+  } catch (e){
+    $('#mount').replaceChildren(el('div', {className:'err'}, `Failed to load from GitHub: ${e.message}`));
+  }
+})();
 </script>
 </body>
 </html>
