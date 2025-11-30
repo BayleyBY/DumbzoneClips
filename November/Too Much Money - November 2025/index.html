@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Too Much Money — November 2025</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.45; margin: 24px; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap: wrap; }
+    .row { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap: wrap; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:12px 14px; margin:12px 0; }
+    .small { color:#777; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    audio { width: 320px; }
+    select { padding:6px 8px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Too Much Money — November 2025</h1>
+    <div class="row">
+      <label for="episodeFilter">Filter by episode:</label>
+      <select id="episodeFilter"><option value="">All</option></select>
+    </div>
+    <div class="small">Portable read-only page. Share this folder as-is (keep <span class="mono">clips/</span> with it).</div>
+  </header>
+  <div id="hits"></div>
+
+<script id="payload" type="application/json">[{"episode": "25-11-03", "episode_pretty": "November 3", "start": 9050.843, "end": 9061.116, "text": "I mean, this shows that people have too much money.", "context": "Used it. I mean, this shows that people have too much money. You certainly just shouldn't be able to buy this and then...", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-11-03_tmm_001.mp3"}, {"episode": "25-11-04", "episode_pretty": "November 4", "start": 5472.899, "end": 5477.542, "text": "Why there's too much money.", "context": "We need a new list. Why there's too much money. Sure.", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-11-04_tmm_001.mp3"}]</script>
+<script>
+let data = [];
+try {
+  data = JSON.parse(document.getElementById('payload').textContent);
+  if (!Array.isArray(data)) data = [];
+} catch (e) {
+  const pre = document.createElement('pre');
+  pre.textContent = 'JSON parse error: ' + e.message;
+  pre.style.color = 'crimson';
+  document.body.insertBefore(pre, document.body.firstChild);
+}
+
+function render() {
+  const container = document.getElementById('hits');
+  const select = document.getElementById('episodeFilter');
+  if (!select.dataset.init) {
+    const episodes = Array.from(new Set(data.map(d => d.episode))).sort();
+    episodes.forEach(ep => { const opt = document.createElement('option'); opt.value = ep; opt.textContent = ep; select.appendChild(opt); });
+    select.dataset.init = "1";
+    select.onchange = () => render();
+  }
+  container.innerHTML = '';
+  const filterEp = select.value || '';
+  const items = filterEp ? data.filter(d => d.episode === filterEp) : data;
+  if (!items.length) {
+    const d = document.createElement('div'); d.className = 'small'; d.textContent = 'No matches.'; container.appendChild(d); return;
+  }
+  items.forEach((item, idx) => {
+    const card = document.createElement('div'); card.className = 'card';
+    const title = document.createElement('div'); title.className = 'row';
+    const left = document.createElement('div');
+    left.innerHTML = '<strong>#' + (idx+1) + '</strong> ' +
+                     '<span class="small">(episode: ' + (item.episode || '?') +
+                     ', speaker: ' + (item.speaker || item.speaker_id || '?') + ')</span>';
+    const right = document.createElement('div'); right.className = 'small mono';
+    const s = Number(item.start || 0).toFixed(2), e = Number(item.end || 0).toFixed(2);
+    right.textContent = '@ ' + s + 's – ' + e + 's';
+    title.appendChild(left); title.appendChild(right);
+
+    const row = document.createElement('div'); row.className = 'row';
+    const audio = document.createElement('audio'); audio.controls = true; audio.preload = 'metadata';
+    audio.src = item.clip;
+    const text = document.createElement('span');
+    // Prefer extended context if present; fall back to the hit line
+    const display = (item.context && item.context.trim())
+      ? item.context
+      : (item.context_text && item.context_text.trim()) // optional legacy key
+        ? item.context_text
+        : (item.text || '');
+    text.textContent = '  ' + display;
+    row.appendChild(audio); row.appendChild(text);
+
+    card.appendChild(title); card.appendChild(row); container.appendChild(card);
+  });
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>The Point Is — November 2025</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.45; margin: 24px; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap: wrap; }
+    .row { display:flex; align-items:center; gap:8px; margin:6px 0; flex-wrap: wrap; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:12px 14px; margin:12px 0; }
+    .small { color:#777; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    audio { width: 320px; }
+    select { padding:6px 8px; border-radius:8px; border:1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Point Is — November 2025</h1>
+    <div class="row">
+      <label for="episodeFilter">Filter by episode:</label>
+      <select id="episodeFilter"><option value="">All</option></select>
+    </div>
+    <div class="small">Portable read-only page. Share this folder as-is (keep <span class="mono">clips/</span> with it).</div>
+  </header>
+  <div id="hits"></div>
+
+<script id="payload" type="application/json">[{"episode": "25-11-03", "episode_pretty": "November 3", "start": 3438.639, "end": 3458.143, "text": "And the point is that it seems like a pretty bad bit.", "context": "He wants Trump to step in and get him some cancer research drugs that they were dragging their feet on. And the point is that it seems like a pretty bad bit. It's already kind of a bad bit, like if only the most famous and wealthy can get certain treatments.", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-11-03_tp_001.mp3"}, {"episode": "25-11-03", "episode_pretty": "November 3", "start": 6510.102, "end": 6516.712, "text": "The point is that I didn't know until hours later that I forgot to change my shorts.", "context": "I didn't know. The point is that I didn't know until hours later that I forgot to change my shorts. Yeah.", "speaker_id": "SPEAKER_08", "speaker": "DAN", "clip": "clips/25-11-03_tp_002.mp3"}, {"episode": "25-11-11", "episode_pretty": "November 11", "start": 4913.086, "end": 4920.022, "text": "So the point is the fans made this happen.", "context": "Thank you for your passion and your patience. So the point is the fans made this happen. Without a doubt.", "speaker_id": "SPEAKER_07", "speaker": "DAN", "clip": "clips/25-11-11_tp_001.mp3"}, {"episode": "25-11-11", "episode_pretty": "November 11", "start": 5877.069, "end": 5892.389, "text": "So I say, but the point is that clip did make it seem like, oh, maybe she is about to put on her armband and do some goose stepping.", "context": "That's, yeah, right. So I say, but the point is that clip did make it seem like, oh, maybe she is about to put on her armband and do some goose stepping. I think she's just a product of meme society or whatever.", "speaker_id": "SPEAKER_07", "speaker": "DAN", "clip": "clips/25-11-11_tp_002.mp3"}, {"episode": "25-11-13", "episode_pretty": "November 13", "start": 5881.013, "end": 5884.88, "text": "The point is I had a terrible week.", "context": "It doesn't matter. The point is I had a terrible week. There was no cowboy game to float me.", "speaker_id": "SPEAKER_07", "speaker": "JAKE", "clip": "clips/25-11-13_tp_001.mp3"}, {"episode": "25-11-21", "episode_pretty": "November 21", "start": 2749.424, "end": 2764.876, "text": "Now, there's some weeks where there's three, four, but the point is they, for the most part, have the same number of games.", "context": "Counting the triple plays as three and typically giving them two other games a week. Now, there's some weeks where there's three, four, but the point is they, for the most part, have the same number of games. Triples just can destroy you or elevate you.", "speaker_id": "SPEAKER_08", "speaker": "JAKE", "clip": "clips/25-11-21_tp_001.mp3"}, {"episode": "25-11-24", "episode_pretty": "November 24", "start": 5617.105, "end": 5625.232, "text": "The point is earlybirdcbd.com.", "context": "BFCM300. The point is earlybirdcbd.com. And then go to our promo codes page on the website, and you'll be able to figure all this out.", "speaker_id": "SPEAKER_08", "speaker": "JAKE", "clip": "clips/25-11-24_tp_001.mp3"}]</script>
+<script>
+let data = [];
+try {
+  data = JSON.parse(document.getElementById('payload').textContent);
+  if (!Array.isArray(data)) data = [];
+} catch (e) {
+  const pre = document.createElement('pre');
+  pre.textContent = 'JSON parse error: ' + e.message;
+  pre.style.color = 'crimson';
+  document.body.insertBefore(pre, document.body.firstChild);
+}
+
+function render() {
+  const container = document.getElementById('hits');
+  const select = document.getElementById('episodeFilter');
+  if (!select.dataset.init) {
+    const episodes = Array.from(new Set(data.map(d => d.episode))).sort();
+    episodes.forEach(ep => { const opt = document.createElement('option'); opt.value = ep; opt.textContent = ep; select.appendChild(opt); });
+    select.dataset.init = "1";
+    select.onchange = () => render();
+  }
+  container.innerHTML = '';
+  const filterEp = select.value || '';
+  const items = filterEp ? data.filter(d => d.episode === filterEp) : data;
+  if (!items.length) {
+    const d = document.createElement('div'); d.className = 'small'; d.textContent = 'No matches.'; container.appendChild(d); return;
+  }
+  items.forEach((item, idx) => {
+    const card = document.createElement('div'); card.className = 'card';
+    const title = document.createElement('div'); title.className = 'row';
+    const left = document.createElement('div');
+    left.innerHTML = '<strong>#' + (idx+1) + '</strong> ' +
+                     '<span class="small">(episode: ' + (item.episode || '?') +
+                     ', speaker: ' + (item.speaker || item.speaker_id || '?') + ')</span>';
+    const right = document.createElement('div'); right.className = 'small mono';
+    const s = Number(item.start || 0).toFixed(2), e = Number(item.end || 0).toFixed(2);
+    right.textContent = '@ ' + s + 's – ' + e + 's';
+    title.appendChild(left); title.appendChild(right);
+
+    const row = document.createElement('div'); row.className = 'row';
+    const audio = document.createElement('audio'); audio.controls = true; audio.preload = 'metadata';
+    audio.src = item.clip;
+    const text = document.createElement('span');
+    // Prefer extended context if present; fall back to the hit line
+    const display = (item.context && item.context.trim())
+      ? item.context
+      : (item.context_text && item.context_text.trim()) // optional legacy key
+        ? item.context_text
+        : (item.text || '');
+    text.textContent = '  ' + display;
+    row.appendChild(audio); row.appendChild(text);
+
+    card.appendChild(title); card.appendChild(row); container.appendChild(card);
+  });
+}
+render();
+</script>
+</body>
+</html>
