@@ -25,7 +25,12 @@ share_readonly/
 voice_samples/
 whisperx_models/
 
-# Secrets
+# Secrets / local config
 *.env
 .env*
 secrets.*
+config.json
+
+# Pipeline working dirs
+pipeline/tmp/
+pipeline/models/
