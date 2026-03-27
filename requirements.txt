@@ -1,0 +1,21 @@
+# Core transcription & diarization
+whisperx
+faster-whisper
+
+# Speaker identification / voice fingerprinting
+speechbrain
+torch
+torchaudio
+
+# Audio processing
+ffmpeg-python
+
+# Utilities
+numpy
+tqdm
+
+# Note: whisperx requires PyAnnote for diarization (needs HuggingFace token)
+# pip install pyannote.audio
+# Also requires ffmpeg installed via system package manager:
+#   brew install ffmpeg  (macOS)
+#   apt install ffmpeg   (Linux)

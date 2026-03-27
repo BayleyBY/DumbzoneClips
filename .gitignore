@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Output / working dirs (keep out of main branch)
+sodes/
+sodes_done/
+scripts/
+share_readonly/
+voice_samples/
+whisperx_models/
+
+# Secrets
+*.env
+.env*
+secrets.*
